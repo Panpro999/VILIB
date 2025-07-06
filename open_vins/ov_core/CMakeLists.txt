@@ -37,6 +37,15 @@ if (PYTHONLIBS_FOUND AND NOT DISABLE_MATPLOTLIB)
     list(APPEND thirdparty_libraries ${PYTHON_LIBRARIES})
 endif ()
 
+# Option to use vilib GPU frontend
+option(USE_VILIB_GPU "Use vilib GPU accelerated frontend" OFF)
+if (USE_VILIB_GPU)
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../vilib-master ${CMAKE_CURRENT_BINARY_DIR}/vilib-master)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../vilib-master/visual_lib/include)
+    list(APPEND thirdparty_libraries vilib)
+    add_definitions(-DUSE_VILIB_GPU)
+endif ()
+
 # We need c++14 for ROS2, thus just require it for everybody
 # NOTE: To future self, hope this isn't an issue...
 set(CMAKE_CXX_STANDARD 14)
