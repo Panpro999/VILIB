@@ -21,11 +21,7 @@
 
 #include "TrackKLT.h"
 
-#include "Grider_FAST.h"
-#include "Grider_GRID.h"
-#ifdef USE_VILIB_GPU
-#include "Grider_VILIB.h"
-#endif
+#include "Grider_GPU.h"
 #include "cam/CamBase.h"
 #include "feat/Feature.h"
 #include "feat/FeatureDatabase.h"
@@ -473,11 +469,6 @@ void TrackKLT::perform_detection_monocular(const std::vector<cv::Mat> &img0pyr, 
   if (num_featsneeded < std::min(20, (int)(min_feat_percent * num_features)))
     return;
 
-  // This is old extraction code that would extract from the whole image
-  // This can be slow as this will recompute extractions for grid areas that we have max features already
-  // std::vector<cv::KeyPoint> pts0_ext;
-  // Grider_FAST::perform_griding(img0pyr.at(0), mask0_updated, pts0_ext, num_features, grid_x, grid_y, threshold, true);
-
   // We also check a downsampled mask such that we don't extract in areas where it is all masked!
   cv::Mat mask0_grid;
   cv::resize(mask0, mask0_grid, size_grid, 0.0, 0.0, cv::INTER_NEAREST);
@@ -494,11 +485,7 @@ void TrackKLT::perform_detection_monocular(const std::vector<cv::Mat> &img0pyr, 
     }
   }
   std::vector<cv::KeyPoint> pts0_ext;
-#ifdef USE_VILIB_GPU
-  Grider_VILIB::perform_griding(img0pyr.at(0), mask0_updated, valid_locs, pts0_ext, num_features, grid_x, grid_y, threshold, true);
-#else
-  Grider_GRID::perform_griding(img0pyr.at(0), mask0_updated, valid_locs, pts0_ext, num_features, grid_x, grid_y, threshold, true);
-#endif
+  Grider_GPU::perform_griding(img0pyr.at(0), mask0_updated, valid_locs, pts0_ext, num_features, grid_x, grid_y, threshold, true);
 
   // Now, reject features that are close a current feature
   std::vector<cv::KeyPoint> kpts0_new;
@@ -616,9 +603,6 @@ void TrackKLT::perform_detection_stereo(const std::vector<cv::Mat> &img0pyr, con
   if (num_featsneeded_0 > std::min(20, (int)(min_feat_percent * num_features))) {
 
     // This is old extraction code that would extract from the whole image
-    // This can be slow as this will recompute extractions for grid areas that we have max features already
-    // std::vector<cv::KeyPoint> pts0_ext;
-    // Grider_FAST::perform_griding(img0pyr.at(0), mask0_updated, pts0_ext, num_features, grid_x, grid_y, threshold, true);
 
     // We also check a downsampled mask such that we don't extract in areas where it is all masked!
     cv::Mat mask0_grid;
@@ -636,11 +620,7 @@ void TrackKLT::perform_detection_stereo(const std::vector<cv::Mat> &img0pyr, con
       }
     }
     std::vector<cv::KeyPoint> pts0_ext;
-#ifdef USE_VILIB_GPU
-    Grider_VILIB::perform_griding(img0pyr.at(0), mask0_updated, valid_locs, pts0_ext, num_features, grid_x, grid_y, threshold, true);
-#else
-    Grider_GRID::perform_griding(img0pyr.at(0), mask0_updated, valid_locs, pts0_ext, num_features, grid_x, grid_y, threshold, true);
-#endif
+    Grider_GPU::perform_griding(img0pyr.at(0), mask0_updated, valid_locs, pts0_ext, num_features, grid_x, grid_y, threshold, true);
 
     // Now, reject features that are close a current feature
     std::vector<cv::KeyPoint> kpts0_new;
@@ -795,11 +775,6 @@ void TrackKLT::perform_detection_stereo(const std::vector<cv::Mat> &img0pyr, con
   int num_featsneeded_1 = num_features - (int)pts1.size();
   if (num_featsneeded_1 > std::min(20, (int)(min_feat_percent * num_features))) {
 
-    // This is old extraction code that would extract from the whole image
-    // This can be slow as this will recompute extractions for grid areas that we have max features already
-    // std::vector<cv::KeyPoint> pts1_ext;
-    // Grider_FAST::perform_griding(img1pyr.at(0), mask1_updated, pts1_ext, num_features, grid_x, grid_y, threshold, true);
-
     // We also check a downsampled mask such that we don't extract in areas where it is all masked!
     cv::Mat mask1_grid;
     cv::resize(mask1, mask1_grid, size_grid1, 0.0, 0.0, cv::INTER_NEAREST);
@@ -816,11 +791,7 @@ void TrackKLT::perform_detection_stereo(const std::vector<cv::Mat> &img0pyr, con
       }
     }
     std::vector<cv::KeyPoint> pts1_ext;
-#ifdef USE_VILIB_GPU
-    Grider_VILIB::perform_griding(img1pyr.at(0), mask1_updated, valid_locs, pts1_ext, num_features, grid_x, grid_y, threshold, true);
-#else
-    Grider_GRID::perform_griding(img1pyr.at(0), mask1_updated, valid_locs, pts1_ext, num_features, grid_x, grid_y, threshold, true);
-#endif
+    Grider_GPU::perform_griding(img1pyr.at(0), mask1_updated, valid_locs, pts1_ext, num_features, grid_x, grid_y, threshold, true);
 
     // Now, reject features that are close a current feature
     for (auto &kpt : pts1_ext) {
