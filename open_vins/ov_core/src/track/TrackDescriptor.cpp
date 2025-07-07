@@ -23,7 +23,7 @@
 
 #include <opencv2/features2d.hpp>
 
-#include "Grider_FAST.h"
+#include "Grider_GPU.h"
 #include "cam/CamBase.h"
 #include "feat/Feature.h"
 #include "feat/FeatureDatabase.h"
@@ -358,9 +358,13 @@ void TrackDescriptor::perform_detection_monocular(const cv::Mat &img0, const cv:
   // Assert that we need features
   assert(pts0.empty());
 
-  // Extract our features (use FAST with griding)
+  // Extract our features using GPU griding
+  std::vector<std::pair<int, int>> locs;
+  for (int x = 0; x < grid_x; ++x)
+    for (int y = 0; y < grid_y; ++y)
+      locs.emplace_back(x, y);
   std::vector<cv::KeyPoint> pts0_ext;
-  Grider_FAST::perform_griding(img0, mask0, pts0_ext, num_features, grid_x, grid_y, threshold, true);
+  Grider_GPU::perform_griding(img0, mask0, locs, pts0_ext, num_features, grid_x, grid_y, threshold, true);
 
   // For all new points, extract their descriptors
   cv::Mat desc0_ext;
@@ -415,8 +419,12 @@ void TrackDescriptor::perform_detection_stereo(const cv::Mat &img0, const cv::Ma
   parallel_for_(cv::Range(0, 2), LambdaBody([&](const cv::Range &range) {
                   for (int i = range.start; i < range.end; i++) {
                     bool is_left = (i == 0);
-                    Grider_FAST::perform_griding(is_left ? img0 : img1, is_left ? mask0 : mask1, is_left ? pts0_ext : pts1_ext,
-                                                 num_features, grid_x, grid_y, threshold, true);
+                    std::vector<std::pair<int, int>> locs;
+                    for (int x = 0; x < grid_x; ++x)
+                      for (int y = 0; y < grid_y; ++y)
+                        locs.emplace_back(x, y);
+                    Grider_GPU::perform_griding(is_left ? img0 : img1, is_left ? mask0 : mask1, locs, is_left ? pts0_ext : pts1_ext,
+                                                num_features, grid_x, grid_y, threshold, true);
                     (is_left ? orb0 : orb1)->compute(is_left ? img0 : img1, is_left ? pts0_ext : pts1_ext, is_left ? desc0_ext : desc1_ext);
                   }
                 }));
